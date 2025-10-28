@@ -59,7 +59,7 @@ npm run seed
 npm run dev
 ```
 
-The server will start on `http://localhost:8080` (or the port specified in your `.env` file).
+The server will start on `http://localhost:3001` (or the port specified in your `.env` file).
 
 ## Environment Variables
 

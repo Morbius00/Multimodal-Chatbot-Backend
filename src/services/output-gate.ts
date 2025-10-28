@@ -19,7 +19,12 @@ export interface SafetyCheck {
 export class OutputGateService {
   private readonly domainKeywords = {
     general: ['general', 'help', 'assist', 'question', 'information'],
-    education: ['education', 'learning', 'study', 'academic', 'school', 'university', 'course', 'syllabus', 'curriculum'],
+    education: [
+      'education', 'learning', 'study', 'academic', 'school', 'university', 'course', 'syllabus', 'curriculum',
+      'studies', 'studying', 'improve', 'performance', 'grades', 'exam', 'test', 'assignment', 'homework',
+      'class', 'lecture', 'student', 'teacher', 'professor', 'tutor', 'learn', 'understand', 'practice',
+      'knowledge', 'skill', 'improvement', 'teaching', 'revision', 'notes', 'textbook', 'score'
+    ],
     finance: ['finance', 'financial', 'money', 'investment', 'trading', 'market', 'economy', 'budget', 'savings'],
     medical: ['medical', 'health', 'healthcare', 'medicine', 'symptom', 'diagnosis', 'treatment', 'doctor', 'patient']
   };
@@ -190,41 +195,105 @@ export class OutputGateService {
   /**
    * Check if content is relevant to the agent's domain
    */
+  private readonly commonDomainPhrases = {
+    general: [
+      'can you', 'how to', 'what is', 'tell me about', 'explain',
+      'help me', 'i need', 'give me', 'show me', 'define'
+    ],
+    education: [
+      'how can i', 'help me', 'tell me', 'explain', 'understand',
+      'better', 'improve', 'learn', 'study', 'topic', 'teach',
+      'practice', 'remember', 'prepare', 'review', 'tips',
+      'strategy', 'method', 'technique', 'comprehend'
+    ],
+    finance: [
+      'money', 'cost', 'price', 'worth', 'value', 'spend',
+      'save', 'invest', 'budget', 'payment', 'expense',
+      'income', 'profit', 'loss', 'debt', 'credit',
+      'mortgage', 'loan', 'tax', 'insurance'
+    ],
+    medical: [
+      'health', 'feel', 'pain', 'symptoms', 'condition',
+      'treatment', 'medicine', 'doctor', 'hospital', 'sick',
+      'disease', 'infection', 'injury', 'wellness', 'diet',
+      'exercise', 'therapy', 'care', 'prevention', 'healing'
+    ]
+  };
+
   private checkDomainRelevance(agentKey: string, userQuery: string, response: string): {
     isRelevant: boolean;
     reason?: string;
   } {
-    const domainKeywords = this.domainKeywords[agentKey as keyof typeof this.domainKeywords] || [];
+    // General agent can handle any domain
+    if (agentKey === 'general') {
+      return { isRelevant: true };
+    }
+
     const queryLower = userQuery.toLowerCase();
-    const responseLower = response.toLowerCase();
-
-    // Check if query contains domain keywords
-    const hasDomainKeywords = domainKeywords.some(keyword => 
-      queryLower.includes(keyword) || responseLower.includes(keyword)
-    );
-
-    if (!hasDomainKeywords && agentKey !== 'general') {
-      return {
-        isRelevant: false,
-        reason: 'No domain-specific keywords found'
-      };
+    const domainKeywords = this.domainKeywords[agentKey as keyof typeof this.domainKeywords] || [];
+    const domainPhrases = this.commonDomainPhrases[agentKey as keyof typeof this.commonDomainPhrases] || [];
+    
+    // First check query for domain relevance using keywords and phrases
+    const hasQueryDomainKeywords = domainKeywords.some(keyword => queryLower.includes(keyword));
+    const hasQueryDomainPhrases = domainPhrases.some(phrase => queryLower.includes(phrase));
+    
+    if (hasQueryDomainKeywords || hasQueryDomainPhrases) {
+      return { isRelevant: true };
     }
 
-    // Check for cross-domain content
-    const otherDomains = Object.keys(this.domainKeywords).filter(d => d !== agentKey);
-    const hasOtherDomainContent = otherDomains.some(domain => {
-      const keywords = this.domainKeywords[domain as keyof typeof this.domainKeywords];
-      return keywords.some(keyword => responseLower.includes(keyword));
-    });
-
-    if (hasOtherDomainContent && agentKey !== 'general') {
-      return {
-        isRelevant: false,
-        reason: 'Contains content from other domains'
-      };
+    // If response exists, check it as well
+    if (response && response.trim() !== '') {
+      const responseLower = response.toLowerCase();
+      const hasResponseDomainKeywords = domainKeywords.some(keyword => responseLower.includes(keyword));
+      const hasResponseDomainPhrases = domainPhrases.some(phrase => responseLower.includes(phrase));
+      
+      if (hasResponseDomainKeywords || hasResponseDomainPhrases) {
+        return { isRelevant: true };
+      }
     }
 
-    return { isRelevant: true };
+    // Domain-specific contextual analysis
+    switch (agentKey) {
+      case 'education':
+        // Check for learning intent phrases
+        const learningIntentPhrases = ['how can i', 'help me', 'want to', 'need to', 'trying to'];
+        if (learningIntentPhrases.some(phrase => queryLower.includes(phrase))) {
+          return { isRelevant: true };
+        }
+        break;
+
+      case 'finance':
+        // Check for financial intent phrases
+        const financialIntentPhrases = ['how much', 'afford', 'cost of', 'price of', 'pay for'];
+        if (financialIntentPhrases.some(phrase => queryLower.includes(phrase))) {
+          return { isRelevant: true };
+        }
+        break;
+
+      case 'medical':
+        // Check for health-related intent phrases
+        const healthIntentPhrases = ['not feeling', 'experiencing', 'symptoms of', 'worried about', 'concerned about'];
+        if (healthIntentPhrases.some(phrase => queryLower.includes(phrase))) {
+          return { isRelevant: true };
+        }
+        break;
+    }
+
+    // Check for generic question patterns that might be domain-relevant
+    const genericQuestionPatterns = [
+      /^(?:what|how|why|when|where|who|can|should|could|would|will)/i,
+      /(?:tell me|explain|help|advice|guide|tips)/i,
+      /(?:more information|learn about|understand)/i
+    ];
+
+    if (genericQuestionPatterns.some(pattern => pattern.test(queryLower))) {
+      return { isRelevant: true };
+    }
+
+    return {
+      isRelevant: false,
+      reason: 'Query does not appear to be relevant to the domain'
+    };
   }
 
   /**

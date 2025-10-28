@@ -43,17 +43,19 @@ class GoogleGenAIService {
     this.client = new GoogleGenerativeAI(env.GOOGLE_GENAI_API_KEY);
   }
 
-  private getModel(modelName: string): GenerativeModel {
-    if (!this.models.has(modelName)) {
-      this.models.set(modelName, this.client.getGenerativeModel({ 
+  private getModel(modelName: string, tools?: any[]): GenerativeModel {
+    const cacheKey = tools ? `${modelName}:with-tools` : modelName;
+    if (!this.models.has(cacheKey)) {
+      this.models.set(cacheKey, this.client.getGenerativeModel({ 
         model: modelName,
         generationConfig: {
           temperature: 0.4,
           maxOutputTokens: 1200,
-        }
+        },
+        tools: tools ? [{ functionDeclarations: tools }] : undefined
       }));
     }
-    return this.models.get(modelName)!;
+    return this.models.get(cacheKey)!;
   }
 
   private convertMessagesToGeminiFormat(messages: ChatMessage[]): Content[] {
@@ -97,14 +99,12 @@ class GoogleGenAIService {
     options: LLMStreamOptions = {}
   ): Promise<string> {
     try {
-      const generativeModel = this.getModel(model.name);
-      const contents = this.convertMessagesToGeminiFormat(messages);
-      
       const tools = options.tools ? this.convertToolsToGeminiFormat(options.tools) : undefined;
+      const generativeModel = this.getModel(model.name, tools);
+      const contents = this.convertMessagesToGeminiFormat(messages);
       
       const result = await generativeModel.generateContent({
         contents,
-        tools: tools ? [{ functionDeclarations: tools }] : undefined,
       });
       
       const response = await result.response;
@@ -123,10 +123,9 @@ class GoogleGenAIService {
     options: LLMStreamOptions = {}
   ): Promise<void> {
     try {
-      const generativeModel = this.getModel(model.name);
-      const contents = this.convertMessagesToGeminiFormat(messages);
-      
       const tools = options.tools ? this.convertToolsToGeminiFormat(options.tools) : undefined;
+      const generativeModel = this.getModel(model.name, tools);
+      const contents = this.convertMessagesToGeminiFormat(messages);
       
       logger.debug({ 
         model: model.name, 
@@ -136,7 +135,6 @@ class GoogleGenAIService {
       
       const stream = await generativeModel.generateContentStream({
         contents,
-        tools: tools ? [{ functionDeclarations: tools }] : undefined,
       });
       
       let fullResponse = '';
