@@ -2,7 +2,8 @@ import { logger } from '../utils/logger';
 import { documentChunker } from '../utils/chunk';
 
 // Sample knowledge base data
-const sampleKnowledge = {
+type KnowledgeDoc = { docId: string; title: string; content: string; metadata: any };
+const sampleKnowledge: Record<string, KnowledgeDoc[]> = {
   global_faq: [
     {
       docId: 'faq-001',
@@ -101,7 +102,7 @@ async function seedKnowledgeBaseMock() {
     // Show sample chunks
     logger.info('Sample chunks created:');
     for (const [collection, documents] of Object.entries(sampleKnowledge)) {
-      const doc = documents[0];
+      const doc = documents[0] || { content: '', docId: 'unknown', title: 'unknown' } as KnowledgeDoc;
       const chunks = documentChunker.chunkDocument(doc.content, {
         maxChunkSize: 800,
         overlap: 100,

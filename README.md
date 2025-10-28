@@ -72,6 +72,10 @@ See `env.example` for all required environment variables:
 - `OBJECT_STORE_BUCKET`: S3-compatible bucket for file storage
 - And more...
 
+### Google OAuth
+
+- `GOOGLE_CLIENT_ID`: (optional) Google OAuth Client ID used by your frontend to obtain an ID token. If provided, the backend exposes `POST /api/auth/google` which accepts `{ idToken }` and signs the user in (creates an account if it doesn't exist).
+
 ## API Endpoints
 
 ### Public Endpoints

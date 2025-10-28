@@ -13,6 +13,7 @@ export interface ChatMessage {
   attachments?: Array<{
     type: 'image' | 'audio' | 'pdf';
     data: string; // base64 or URL
+    mime?: string;
   }>;
 }
 
@@ -46,14 +47,17 @@ class GoogleGenAIService {
   private getModel(modelName: string, tools?: any[]): GenerativeModel {
     const cacheKey = tools ? `${modelName}:with-tools` : modelName;
     if (!this.models.has(cacheKey)) {
-      this.models.set(cacheKey, this.client.getGenerativeModel({ 
+      // The SDK typings may not include the 'tools' field depending on installed version.
+      // Cast to any to avoid strict type errors while still passing tools when available.
+      const params: any = {
         model: modelName,
         generationConfig: {
           temperature: 0.4,
           maxOutputTokens: 1200,
-        },
-        tools: tools ? [{ functionDeclarations: tools }] : undefined
-      }));
+        }
+      };
+      if (tools) params.tools = [{ functionDeclarations: tools }];
+      this.models.set(cacheKey, this.client.getGenerativeModel(params));
     }
     return this.models.get(cacheKey)!;
   }
@@ -68,7 +72,15 @@ class GoogleGenAIService {
           if (attachment.type === 'image') {
             parts.push({
               inlineData: {
-                mimeType: 'image/jpeg', // Default, should be determined from actual file
+                mimeType: attachment.mime || 'image/jpeg', // Use provided mime if available
+                data: attachment.data,
+              }
+            });
+          } else if (attachment.type === 'pdf') {
+            // Some LLM clients may support attaching PDF bytes similarly; we'll use application/pdf
+            parts.push({
+              inlineData: {
+                mimeType: attachment.mime || 'application/pdf',
                 data: attachment.data,
               }
             });
@@ -147,8 +159,8 @@ class GoogleGenAIService {
         }
         
         // Handle function calls if present
-        if (chunk.functionCalls && chunk.functionCalls.length > 0) {
-          for (const functionCall of chunk.functionCalls) {
+        if ((chunk as any).functionCalls && (chunk as any).functionCalls.length > 0) {
+          for (const functionCall of (chunk as any).functionCalls) {
             const toolCall: ToolCall = {
               name: functionCall.name,
               arguments: functionCall.args || {},

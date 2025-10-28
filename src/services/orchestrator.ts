@@ -1,6 +1,7 @@
 import { Agent } from '../db/models';
 import { getAgentConfig } from '../agents/config';
 import { callLLMStream, ChatMessage, ModelRef } from './llm.google';
+import fs from 'fs/promises';
 import { retrievalService, RetrievalResult } from './retrieval';
 import { outputGateService } from './output-gate';
 import { logger } from '../utils/logger';
@@ -50,6 +51,60 @@ export class ChatOrchestrator {
       // Perform retrieval to get relevant context
       let retrievalResults: RetrievalResult[] = [];
       let contextText = '';
+      // If there are attachments, load their transcripts and include in context
+      // Also prepare attachment payloads (image bytes -> base64) to forward to the LLM
+      let attachmentPayloads: Array<{ type: string; data: string; mime?: string }> = [];
+      if (Array.isArray((request as any).attachmentIds) && (request as any).attachmentIds.length > 0) {
+        try {
+          const FileDoc = (await import('../db/models')).FileDoc;
+          const fileDocs = await FileDoc.find({ _id: { $in: (request as any).attachmentIds } }).lean();
+          if (fileDocs && fileDocs.length > 0) {
+            const fileTexts = fileDocs.map(fd => {
+              // prefer transcripts array
+              if (fd.transcripts && fd.transcripts.length > 0) {
+                return fd.transcripts.map((t: any) => t.text).join('\n');
+              }
+              // fallback to ocrText or empty
+              return fd.ocrText || '';
+            }).filter(Boolean);
+
+            if (fileTexts.length > 0) {
+              const filesCombined = fileTexts.join('\n\n');
+              contextText += `\n\nAttached files context:\n${filesCombined}\n\n`;
+              logger.info({ filesCount: fileDocs.length, conversationId: request.conversationId }, 'Loaded attachment transcripts');
+            }
+
+            // Build attachments payloads for images (read file bytes -> base64)
+            for (const fd of fileDocs) {
+              try {
+                if (fd.kind === 'image' && fd.uri) {
+                  try {
+                    const data = await fs.readFile(fd.uri);
+                    const base64 = data.toString('base64');
+                    attachmentPayloads.push({ type: 'image', data: base64, mime: fd.mime });
+                  } catch (err) {
+                    logger.error({ err, file: fd.uri }, 'Failed to read attachment file for LLM');
+                  }
+                } else if (fd.kind === 'pdf' && fd.uri) {
+                  // For PDFs we currently include extracted text (transcripts). Optionally
+                  // we could also attach the PDF bytes. For now, attach as 'pdf' with base64.
+                  try {
+                    const data = await fs.readFile(fd.uri);
+                    const base64 = data.toString('base64');
+                    attachmentPayloads.push({ type: 'pdf', data: base64, mime: fd.mime });
+                  } catch (err) {
+                    logger.error({ err, file: fd.uri }, 'Failed to read PDF attachment file for LLM');
+                  }
+                }
+              } catch (err) {
+                logger.error({ err, fd }, 'Error preparing attachment payload');
+              }
+            }
+          }
+        } catch (err) {
+          logger.error({ err }, 'Failed to load attachment transcripts');
+        }
+      }
       
       try {
         retrievalResults = await retrievalService.search(request.text, {
@@ -80,7 +135,14 @@ export class ChatOrchestrator {
         },
         {
           role: 'user',
-          content: request.text
+          content: request.text,
+          // include attachments (if any) so the LLM can see the raw image/pdf bytes
+          attachments: attachmentPayloads && attachmentPayloads.length > 0 ? attachmentPayloads.map(a => ({
+            type: a.type as any,
+            data: a.data,
+            // include mime so the LLM adapter can set the correct inline mime type
+            mime: a.mime
+          })) : undefined
         }
       ];
 

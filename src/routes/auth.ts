@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { User } from '../db/models';
 import { hashPassword, comparePassword, generateToken, generateRefreshToken, verifyToken, authMiddleware, AuthenticatedRequest } from '../auth/jwt';
 import { logger } from '../utils/logger';
+import { signInWithGoogle } from '../auth/google';
 
 const router = Router();
 
@@ -441,6 +442,32 @@ router.post('/refresh', async (req, res) => {
       error: 'Invalid refresh token',
       message: 'Could not refresh token'
     });
+  }
+});
+
+// POST /auth/google - Sign in with Google ID token
+router.post('/google', async (req, res) => {
+  try {
+    const schema = z.object({ idToken: z.string().min(1) });
+    const { idToken } = schema.parse(req.body);
+
+    const result = await signInWithGoogle(idToken);
+
+    res.json({
+      success: true,
+      message: 'Signed in with Google successfully',
+      user: result.user,
+      token: result.token,
+      refreshToken: result.refreshToken,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid request data', details: error.errors });
+      return;
+    }
+
+    logger.error({ error }, 'Google sign-in failed');
+    res.status(401).json({ error: 'Google sign-in failed', message: (error as Error).message });
   }
 });
 

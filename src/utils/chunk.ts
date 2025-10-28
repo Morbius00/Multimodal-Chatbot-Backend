@@ -111,7 +111,7 @@ export class DocumentChunker {
     let startPosition = 0;
 
     for (let i = 0; i < paragraphs.length; i++) {
-      const paragraph = paragraphs[i].trim();
+      const paragraph = (paragraphs[i] || '').trim();
       
       if (!paragraph) continue;
 
@@ -171,7 +171,7 @@ export class DocumentChunker {
     let startPosition = 0;
 
     for (let i = 0; i < sentences.length; i++) {
-      const sentence = sentences[i].trim();
+      const sentence = (sentences[i] || '').trim();
       
       if (!sentence) continue;
 
@@ -266,7 +266,7 @@ export class DocumentChunker {
     
     // Start from the end and work backwards
     for (let i = words.length - 1; i >= 0 && wordCount < overlapSize; i--) {
-      const word = words[i];
+      const word = words[i] || '';
       if (overlapText.length + word.length + 1 <= overlapSize) {
         overlapText = word + (overlapText ? ' ' + overlapText : '');
         wordCount++;

@@ -14,6 +14,8 @@ import conversationsRouter from './routes/conversations';
 import messagesRouter from './routes/messages';
 import chatRouter from './routes/chat';
 import adminKnowledgeRouter from './routes/admin.knowledge';
+import uploadRouter from './routes/upload';
+import filesRouter from './routes/files';
 
 const app = express();
 
@@ -102,6 +104,8 @@ app.use('/api/conversations', conversationsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/admin/knowledge', adminKnowledgeRouter);
+app.use('/api/upload', uploadRouter);
+app.use('/api/files', filesRouter);
 
 // 404 handler
 app.use('*', (req, res) => {

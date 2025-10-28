@@ -14,6 +14,8 @@ const envSchema = z.object({
   
   // Google GenAI
   GOOGLE_GENAI_API_KEY: z.string().default('demo-key'),
+  // Google OAuth
+  GOOGLE_CLIENT_ID: z.string().optional(),
   
   // Object Storage
   OBJECT_STORE_BUCKET: z.string().default('multimodal-chat-files'),
