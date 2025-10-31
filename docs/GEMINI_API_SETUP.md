@@ -93,6 +93,6 @@ If you still get errors after setting up a new API key:
 
 ## Current Status
 
-❌ **Not Working:** The current API key `AIzaSyDL-YxJj4noYeGoCgL5GVorTCx_kuTEU04` is failing for all Gemini models.
+❌ **Not Working:** The current API key is failing for all Gemini models.
 
 ✅ **Action Required:** Get a new API key from Google AI Studio and update your `.env` file.
