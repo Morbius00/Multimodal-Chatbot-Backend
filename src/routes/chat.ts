@@ -4,6 +4,8 @@ import { Message, Conversation } from '../db/models';
 import { authMiddleware, AuthenticatedRequest } from '../auth/jwt';
 import { chatOrchestrator } from '../services/orchestrator';
 import { logger } from '../utils/logger';
+import { generateConversationTitle, shouldUpdateConversationTitle } from '../utils/conversation';
+import { getAgentConfig } from '../agents/config';
 
 const router = Router();
 
@@ -81,6 +83,35 @@ router.post('/stream', authMiddleware, async (req: AuthenticatedRequest, res: Re
       agentKey: finalAgentKey,
       userId: req.user.sub 
     }, 'User message saved');
+
+    // Update conversation title if it's the first message
+    try {
+      const messageCount = await Message.countDocuments({ 
+        conversationId,
+        role: 'user'
+      });
+
+      // If this is the first user message and title hasn't been customized
+      if (messageCount === 1) {
+        const agentConfig = getAgentConfig(finalAgentKey);
+        const agentDisplayName = agentConfig?.displayName || '';
+        
+        if (shouldUpdateConversationTitle(conversation.title || undefined, agentDisplayName)) {
+          const newTitle = generateConversationTitle(text);
+          conversation.title = newTitle;
+          await conversation.save();
+          
+          logger.info({ 
+            conversationId,
+            oldTitle: conversation.title,
+            newTitle 
+          }, 'Conversation title updated with first message');
+        }
+      }
+    } catch (error) {
+      // Don't fail the request if title update fails
+      logger.error({ error, conversationId }, 'Failed to update conversation title');
+    }
 
     // Initialize SSE
     sseInit(res);
@@ -236,6 +267,35 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
     
     const userMessage = new Message(userMessageData);
     await userMessage.save();
+
+    // Update conversation title if it's the first message
+    try {
+      const messageCount = await Message.countDocuments({ 
+        conversationId,
+        role: 'user'
+      });
+
+      // If this is the first user message and title hasn't been customized
+      if (messageCount === 1) {
+        const agentConfig = getAgentConfig(finalAgentKey);
+        const agentDisplayName = agentConfig?.displayName || '';
+        
+        if (shouldUpdateConversationTitle(conversation.title || undefined, agentDisplayName)) {
+          const newTitle = generateConversationTitle(text);
+          conversation.title = newTitle;
+          await conversation.save();
+          
+          logger.info({ 
+            conversationId,
+            oldTitle: conversation.title,
+            newTitle 
+          }, 'Conversation title updated with first message');
+        }
+      }
+    } catch (error) {
+      // Don't fail the request if title update fails
+      logger.error({ error, conversationId }, 'Failed to update conversation title');
+    }
 
     // Process chat request
     const result = await chatOrchestrator.processChatRequest({

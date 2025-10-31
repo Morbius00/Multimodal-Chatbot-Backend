@@ -9,8 +9,34 @@ import { authMiddleware, AuthenticatedRequest } from '../auth/jwt';
 import { FileDoc } from '../db/models';
 import { logger } from '../utils/logger';
 import { retrievalService } from '../services/retrieval';
+import { storageService } from '../services/storage';
 
-const upload = multer({ dest: 'uploads/' });
+// Configure multer with file size limits
+const upload = multer({ 
+  dest: 'uploads/temp/', // Temporary local storage before cloud upload
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB max file size
+    files: 1, // Only 1 file per request
+  },
+  fileFilter: (req, file, cb) => {
+    // Optional: Add allowed file types validation
+    const allowedMimes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp',
+      'application/pdf',
+      'audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+    ];
+    
+    if (allowedMimes.includes(file.mimetype) || file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type ${file.mimetype} not supported`));
+    }
+  }
+});
+
 const router = Router();
 
 const UploadFieldsSchema = z.object({
@@ -52,7 +78,41 @@ function chunkText(text: string, chunkSize = 1000) {
 }
 
 // POST /upload - upload a file and process it
-router.post('/', authMiddleware, upload.single('file'), async (req: AuthenticatedRequest, res) => {
+router.post('/', authMiddleware, (req, res, next) => {
+  upload.single('file')(req, res, (err: any) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        res.status(413).json({ 
+          error: 'File too large',
+          message: 'Maximum file size is 50MB',
+          code: 'FILE_TOO_LARGE'
+        });
+        return;
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        res.status(400).json({ 
+          error: 'Too many files',
+          message: 'Only one file can be uploaded at a time',
+          code: 'TOO_MANY_FILES'
+        });
+        return;
+      }
+      res.status(400).json({ 
+        error: 'Upload error', 
+        message: err.message,
+        code: err.code
+      });
+      return;
+    } else if (err) {
+      res.status(400).json({ 
+        error: 'Upload failed',
+        message: err.message
+      });
+      return;
+    }
+    next();
+  });
+}, async (req: AuthenticatedRequest, res) => {
   try {
     const body = UploadFieldsSchema.parse(req.body || {});
 
@@ -68,23 +128,52 @@ router.post('/', authMiddleware, upload.single('file'), async (req: Authenticate
     }
 
     const kind = inferKind(file.mimetype || '');
-    const destDir = path.join('uploads', String(Date.now()));
-    await fs.mkdir(destDir, { recursive: true });
-    const destPath = path.join(destDir, file.originalname);
-    await fs.rename(file.path, destPath);
+    
+    // Keep temp file path for text extraction
+    const tempPath = file.path;
 
-    // Extract text (pdf/image)
+    // Extract text (pdf/image) from temp file
     let text = '';
     try {
-      text = await extractTextFromFile(destPath, kind);
+      text = await extractTextFromFile(tempPath, kind);
     } catch (err) {
-      logger.error({ err, file: destPath }, 'Failed to extract text from file');
+      logger.error({ err, file: tempPath }, 'Failed to extract text from file');
     }
 
-    // Save file document
+    // Upload to cloud storage (Cloudinary)
+    let cloudUrl = '';
+    let cloudPublicId = '';
+    try {
+      const uploadResult = await storageService.uploadToCloud(tempPath, {
+        folder: `users/${req.user.sub}/files`,
+        resourceType: kind === 'image' ? 'image' : 'raw',
+        tags: [req.user.sub, kind, body.conversationId || 'general'].filter(Boolean),
+      });
+      
+      cloudUrl = uploadResult.secureUrl;
+      cloudPublicId = uploadResult.publicId;
+      
+      logger.info({ 
+        fileId: cloudPublicId, 
+        url: cloudUrl,
+        originalName: file.originalname 
+      }, 'File uploaded to cloud storage');
+    } catch (uploadErr) {
+      logger.error({ error: uploadErr }, 'Failed to upload file to cloud storage');
+      // Clean up temp file and fail the request
+      await storageService.cleanupLocalFile(tempPath);
+      res.status(500).json({ error: 'Failed to upload file to cloud storage. Please check Cloudinary configuration.' });
+      return;
+    }
+
+    // Clean up temporary local file
+    await storageService.cleanupLocalFile(tempPath);
+
+    // Save file document with cloud URL
     const fileDoc = new FileDoc({
       ownerId: req.user.sub,
-      uri: destPath,
+      uri: cloudUrl, // Cloud URL instead of local path
+      cloudPublicId, // Store for future operations (delete, etc.)
       mime: file.mimetype,
       size: file.size,
       kind,
@@ -101,7 +190,7 @@ router.post('/', authMiddleware, upload.single('file'), async (req: Authenticate
         docId: fileDoc._id.toString(),
         chunk,
         title: file.originalname,
-        url: destPath,
+        url: cloudUrl, // Use cloud URL for retrieval references
         metadata: { mime: file.mimetype, ownerId: req.user!.sub }
       }));
 

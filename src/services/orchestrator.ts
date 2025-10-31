@@ -1,9 +1,9 @@
 import { Agent } from '../db/models';
 import { getAgentConfig } from '../agents/config';
 import { callLLMStream, ChatMessage, ModelRef } from './llm.google';
-import fs from 'fs/promises';
 import { retrievalService, RetrievalResult } from './retrieval';
 import { outputGateService } from './output-gate';
+import { storageService } from './storage';
 import { logger } from '../utils/logger';
 
 export interface ChatRequest {
@@ -74,26 +74,30 @@ export class ChatOrchestrator {
               logger.info({ filesCount: fileDocs.length, conversationId: request.conversationId }, 'Loaded attachment transcripts');
             }
 
-            // Build attachments payloads for images (read file bytes -> base64)
+            // Build attachments payloads for images (download from cloud URL -> base64)
             for (const fd of fileDocs) {
               try {
                 if (fd.kind === 'image' && fd.uri) {
                   try {
-                    const data = await fs.readFile(fd.uri);
+                    // Download file from cloud URL (Cloudinary)
+                    const data = await storageService.downloadFromCloud(fd.uri);
                     const base64 = data.toString('base64');
                     attachmentPayloads.push({ type: 'image', data: base64, mime: fd.mime });
+                    logger.info({ fileId: fd._id, kind: fd.kind }, 'Image attachment loaded for LLM');
                   } catch (err) {
-                    logger.error({ err, file: fd.uri }, 'Failed to read attachment file for LLM');
+                    logger.error({ err, file: fd.uri }, 'Failed to download image attachment from cloud');
                   }
                 } else if (fd.kind === 'pdf' && fd.uri) {
                   // For PDFs we currently include extracted text (transcripts). Optionally
                   // we could also attach the PDF bytes. For now, attach as 'pdf' with base64.
                   try {
-                    const data = await fs.readFile(fd.uri);
+                    // Download file from cloud URL (Cloudinary)
+                    const data = await storageService.downloadFromCloud(fd.uri);
                     const base64 = data.toString('base64');
                     attachmentPayloads.push({ type: 'pdf', data: base64, mime: fd.mime });
+                    logger.info({ fileId: fd._id, kind: fd.kind }, 'PDF attachment loaded for LLM');
                   } catch (err) {
-                    logger.error({ err, file: fd.uri }, 'Failed to read PDF attachment file for LLM');
+                    logger.error({ err, file: fd.uri }, 'Failed to download PDF attachment from cloud');
                   }
                 }
               } catch (err) {

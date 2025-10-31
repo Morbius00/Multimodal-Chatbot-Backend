@@ -6,12 +6,13 @@ export type Id = string;
 
 // Zod schemas for validation
 export const AgentSchema = z.object({
-  key: z.enum(['general', 'education', 'finance', 'medical']).or(z.string()),
+  key: z.enum(['general', 'education', 'finance', 'medical', 'technology', 'legal', 'creative', 'language', 'business']).or(z.string()),
   displayName: z.string(),
   systemPrompt: z.string(),
   guardrails: z.object({
     medicalDisclaimer: z.boolean().optional(),
     financialDisclaimer: z.boolean().optional(),
+    legalDisclaimer: z.boolean().optional(),
   }),
   enabledTools: z.array(z.string()),
   retrieval: z.object({
@@ -53,10 +54,11 @@ export const MessageSchema = z.object({
 
 export const FileDocSchema = z.object({
   ownerId: z.string(),
-  uri: z.string(),
+  uri: z.string(), // Cloud URL (Cloudinary secure_url)
   mime: z.string(),
   size: z.number(),
   kind: z.enum(['image', 'audio', 'pdf', 'doc', 'other']),
+  cloudPublicId: z.string().optional(), // Cloudinary public ID for file management
   transcripts: z.array(z.object({
     lang: z.string(),
     text: z.string(),
@@ -115,6 +117,7 @@ const agentSchema = new Schema({
   guardrails: {
     medicalDisclaimer: { type: Boolean, default: false },
     financialDisclaimer: { type: Boolean, default: false },
+    legalDisclaimer: { type: Boolean, default: false },
   },
   enabledTools: [{ type: String }],
   retrieval: {
@@ -163,10 +166,11 @@ const messageSchema = new Schema({
 
 const fileDocSchema = new Schema({
   ownerId: { type: String, required: true, index: true },
-  uri: { type: String, required: true },
+  uri: { type: String, required: true }, // Cloud URL (Cloudinary secure_url)
   mime: { type: String, required: true },
   size: { type: Number, required: true },
   kind: { type: String, enum: ['image', 'audio', 'pdf', 'doc', 'other'], required: true },
+  cloudPublicId: { type: String }, // Cloudinary public ID for file management
   transcripts: [{
     lang: { type: String },
     text: { type: String },
@@ -239,6 +243,7 @@ export interface IAgent {
   guardrails: {
     medicalDisclaimer?: boolean;
     financialDisclaimer?: boolean;
+    legalDisclaimer?: boolean;
   };
   enabledTools: Id[];
   retrieval: {
@@ -290,10 +295,11 @@ export interface IMessage {
 export interface IFileDoc {
   _id: Id;
   ownerId: Id;
-  uri: string;
+  uri: string; // Cloud URL (Cloudinary secure_url)
   mime: string;
   size: number;
   kind: 'image' | 'audio' | 'pdf' | 'doc' | 'other';
+  cloudPublicId?: string; // Cloudinary public ID for file management
   transcripts?: Array<{
     lang: string;
     text: string;

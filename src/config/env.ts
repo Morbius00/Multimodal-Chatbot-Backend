@@ -23,6 +23,11 @@ const envSchema = z.object({
   AWS_ACCESS_KEY_ID: z.string().default('demo-key'),
   AWS_SECRET_ACCESS_KEY: z.string().default('demo-secret'),
   
+  // Cloudinary Configuration
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
+  
   // JWT Configuration
   JWT_PUBLIC_KEY: z.string().default('demo-public-key'),
   JWT_AUDIENCE: z.string().default('assessli-app'),

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { Conversation, Message } from '../db/models';
+import { generateConversationTitle, shouldUpdateConversationTitle } from '../utils/conversation';
+import { getAgentConfig } from '../agents/config';
 import { authMiddleware, AuthenticatedRequest } from '../auth/jwt';
 import { logger } from '../utils/logger';
 
@@ -22,6 +24,11 @@ const GetConversationsQuerySchema = z.object({
 const GetMessagesQuerySchema = z.object({
   limit: z.string().optional().transform(val => val ? parseInt(val, 10) : 50),
   cursor: z.string().optional(),
+});
+
+const UpdateConversationSchema = z.object({
+  title: z.string().min(1).max(100).optional(),
+  metadata: z.record(z.any()).optional(),
 });
 
 /**
@@ -107,12 +114,20 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res) => {
       return;
     }
     
-    const conversation = new Conversation({
+    // Only set title if explicitly provided, otherwise leave undefined
+    // The title will be auto-generated from the first user message
+    const conversationData: any = {
       userId: req.user.sub,
       agentKey,
-      title,
       metadata,
-    });
+    };
+    
+    // Only include title if it was explicitly provided
+    if (title) {
+      conversationData.title = title;
+    }
+    
+    const conversation = new Conversation(conversationData);
     
     await conversation.save();
     
@@ -161,6 +176,37 @@ router.get('/', authMiddleware, async (req: AuthenticatedRequest, res) => {
       .lean();
     
     const total = await Conversation.countDocuments(filter);
+
+    // For conversations that still use the agent display name (or other default),
+    // try to generate a better title from the first user message.
+    // This fixes the UI showing the agent name as the conversation title.
+    try {
+      // Process each conversation sequentially (limit is small; default 20)
+      for (const conv of conversations) {
+        const agentConfig = getAgentConfig(conv.agentKey);
+        const agentDisplayName = agentConfig?.displayName || '';
+
+        if (shouldUpdateConversationTitle(conv.title || undefined, agentDisplayName)) {
+          // Find first user message in this conversation
+          const firstUserMessage = await Message.findOne({ conversationId: conv._id, role: 'user' })
+            .sort({ createdAt: 1 })
+            .lean();
+
+          if (firstUserMessage && firstUserMessage.text) {
+            const newTitle = generateConversationTitle(firstUserMessage.text);
+
+            // Persist the new title so subsequent reads won't repeat this work
+            await Conversation.updateOne({ _id: conv._id }, { $set: { title: newTitle } });
+
+            // Update the response object
+            conv.title = newTitle;
+          }
+        }
+      }
+    } catch (err) {
+      // Don't fail the whole request if title generation fails for some conversations
+      logger.error({ error: err }, 'Failed to auto-generate conversation titles');
+    }
     
     res.json({
       conversations,
@@ -239,7 +285,7 @@ router.get('/:id/messages', authMiddleware, async (req: AuthenticatedRequest, re
     const messages = await Message.find(query)
       .sort({ createdAt: -1 })
       .limit(limit)
-      .populate('attachments', 'uri mime kind size')
+      .populate('attachments', 'uri mime kind size cloudPublicId')
       .lean();
     
     const hasMore = messages.length === limit;
@@ -254,6 +300,112 @@ router.get('/:id/messages', authMiddleware, async (req: AuthenticatedRequest, re
     });
   } catch (error) {
     logger.error({ error, conversationId: req.params.id }, 'Failed to fetch messages');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/conversations/{id}:
+ *   patch:
+ *     summary: Update conversation details
+ *     description: Update conversation title or metadata
+ *     tags: [Conversations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Conversation ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: New conversation title
+ *                 example: Discussion about Machine Learning
+ *               metadata:
+ *                 type: object
+ *                 description: Additional conversation metadata
+ *                 additionalProperties: true
+ *     responses:
+ *       200:
+ *         description: Conversation updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 title:
+ *                   type: string
+ *                 metadata:
+ *                   type: object
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Invalid request data
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Conversation not found
+ *       500:
+ *         description: Internal server error
+ */
+// PATCH /conversations/:id - Update conversation
+router.patch('/:id', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { title, metadata } = UpdateConversationSchema.parse(req.body);
+    
+    if (!req.user) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+    
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (metadata !== undefined) updateData.metadata = metadata;
+    
+    const conversation = await Conversation.findOneAndUpdate(
+      { _id: id, userId: req.user.sub },
+      { $set: updateData },
+      { new: true }
+    );
+    
+    if (!conversation) {
+      res.status(404).json({ error: 'Conversation not found' });
+      return;
+    }
+    
+    logger.info({ 
+      conversationId: id, 
+      userId: req.user.sub,
+      updates: Object.keys(updateData)
+    }, 'Conversation updated');
+    
+    res.json({
+      id: conversation._id,
+      title: conversation.title,
+      metadata: conversation.metadata,
+      updatedAt: conversation.updatedAt,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid request data', details: error.errors });
+      return;
+    }
+    
+    logger.error({ error, conversationId: req.params.id }, 'Failed to update conversation');
     res.status(500).json({ error: 'Internal server error' });
   }
 });

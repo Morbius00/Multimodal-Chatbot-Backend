@@ -97,3 +97,7 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Local uploads (files now stored in cloud)
+uploads/
+!uploads/temp/.gitkeep

@@ -214,7 +214,7 @@ GET /api/agents?limit=10&offset=0
       },
       "model": {
         "provider": "google",
-        "name": "gemini-1.5-flash"
+        "name": "gemini-2.5-flash"
       },
       "temperature": 0.4,
       "maxTokens": 1200,
@@ -273,7 +273,7 @@ GET /api/agents/general
   },
   "model": {
     "provider": "google",
-    "name": "gemini-1.5-flash"
+    "name": "gemini-2.5-flash"
   },
   "temperature": 0.4,
   "maxTokens": 1200,

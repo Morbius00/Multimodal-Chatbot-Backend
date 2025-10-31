@@ -61,7 +61,7 @@ You should see a successful response from Gemini.
 ## Current Configuration
 
 The system is now configured to use:
-- **Model:** `gemini-1.5-flash` (changed from `gemini-2.0-flash-exp`)
+- **Model:** `gemini-2.5-flash` (changed from `gemini-2.5-flash`)
 - All agents (general, education, finance, medical) use this model
 
 ## Free Tier Limits

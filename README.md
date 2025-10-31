@@ -6,6 +6,7 @@ A backend service that powers multiple domain agents (Education, Finance, Medica
 
 - **Multi-Agent System**: Domain-specific agents with specialized prompts and capabilities
 - **Multimodal Support**: Text, image, audio, and PDF processing
+- **Cloud File Storage**: Files stored in Cloudinary (free 25GB tier) with public URLs
 - **Retrieval-Augmented Generation**: MongoDB Atlas Vector Search for domain-specific knowledge
 - **Tool Runtime**: Configurable tools with per-agent allow-lists
 - **Streaming Responses**: Server-Sent Events (SSE) for real-time chat
@@ -69,12 +70,27 @@ See `env.example` for all required environment variables:
 - `REDIS_URL`: Redis connection string
 - `GOOGLE_GENAI_API_KEY`: Google GenAI API key
 - `JWT_PUBLIC_KEY`: JWT public key for token verification
-- `OBJECT_STORE_BUCKET`: S3-compatible bucket for file storage
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: **Cloud storage credentials (required)** - See [Cloud Storage Setup Guide](docs/CLOUD_STORAGE_SETUP.md)
 - And more...
 
 ### Google OAuth
 
 - `GOOGLE_CLIENT_ID`: (optional) Google OAuth Client ID used by your frontend to obtain an ID token. If provided, the backend exposes `POST /api/auth/google` which accepts `{ idToken }` and signs the user in (creates an account if it doesn't exist).
+
+### Cloud Storage Setup
+
+**Important**: Files are now stored in **Cloudinary** (free tier: 25GB storage + 25GB bandwidth/month).
+
+1. Sign up for free at: https://cloudinary.com/users/register/free
+2. Get your credentials from the dashboard
+3. Add to `.env`:
+   ```env
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   ```
+
+See [CLOUD_STORAGE_SETUP.md](docs/CLOUD_STORAGE_SETUP.md) for detailed instructions.
 
 ## API Endpoints
 
