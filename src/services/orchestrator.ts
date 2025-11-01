@@ -132,23 +132,51 @@ export class ChatOrchestrator {
 
       // Build conversation history with context
       const systemPrompt = this.buildSystemPrompt(agentConfig, contextText, retrievalResults);
+      
+      // Retrieve previous messages from the conversation to maintain context
+      const Message = (await import('../db/models')).Message;
+      const previousMessages = await Message.find({ 
+        conversationId: request.conversationId 
+      })
+        .sort({ createdAt: 1 }) // Sort by creation time (oldest first)
+        .limit(20) // Limit to last 20 messages to avoid token overflow
+        .lean();
+
+      logger.info({ 
+        conversationId: request.conversationId,
+        previousMessageCount: previousMessages.length 
+      }, 'Retrieved conversation history');
+
+      // Build messages array with system prompt and conversation history
       const messages: ChatMessage[] = [
         {
           role: 'system',
           content: systemPrompt
-        },
-        {
-          role: 'user',
-          content: request.text,
-          // include attachments (if any) so the LLM can see the raw image/pdf bytes
-          attachments: attachmentPayloads && attachmentPayloads.length > 0 ? attachmentPayloads.map(a => ({
-            type: a.type as any,
-            data: a.data,
-            // include mime so the LLM adapter can set the correct inline mime type
-            mime: a.mime
-          })) : undefined
         }
       ];
+
+      // Add previous messages to maintain context
+      for (const msg of previousMessages) {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          messages.push({
+            role: msg.role,
+            content: msg.text || ''
+          });
+        }
+      }
+
+      // Add the current user message
+      messages.push({
+        role: 'user',
+        content: request.text,
+        // include attachments (if any) so the LLM can see the raw image/pdf bytes
+        attachments: attachmentPayloads && attachmentPayloads.length > 0 ? attachmentPayloads.map(a => ({
+          type: a.type as any,
+          data: a.data,
+          // include mime so the LLM adapter can set the correct inline mime type
+          mime: a.mime
+        })) : undefined
+      });
 
       // TODO: Add tool execution logic here (Phase 5)
 

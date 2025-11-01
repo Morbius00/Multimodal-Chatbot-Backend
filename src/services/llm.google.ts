@@ -63,8 +63,24 @@ class GoogleGenAIService {
   }
 
   private convertMessagesToGeminiFormat(messages: ChatMessage[]): Content[] {
-    return messages.map(msg => {
-      const parts: Part[] = [{ text: msg.content }];
+    const geminiContents: Content[] = [];
+    let systemPrompt = '';
+
+    // Extract system message and prepend it to the first user message
+    for (const msg of messages) {
+      if (msg.role === 'system') {
+        systemPrompt = msg.content;
+        continue; // Skip system messages, we'll prepend to first user message
+      }
+
+      const parts: Part[] = [];
+      
+      // If this is the first user message and we have a system prompt, prepend it
+      if (msg.role === 'user' && geminiContents.length === 0 && systemPrompt) {
+        parts.push({ text: `${systemPrompt}\n\nUser: ${msg.content}` });
+      } else {
+        parts.push({ text: msg.content });
+      }
       
       // Add attachments if present
       if (msg.attachments) {
@@ -88,11 +104,13 @@ class GoogleGenAIService {
         }
       }
       
-      return {
+      geminiContents.push({
         role: msg.role === 'assistant' ? 'model' : 'user',
         parts,
-      };
-    });
+      });
+    }
+    
+    return geminiContents;
   }
 
   private convertToolsToGeminiFormat(tools: ToolDefinition[]): any[] {
