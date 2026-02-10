@@ -214,7 +214,7 @@ GET /api/agents?limit=10&offset=0
       },
       "model": {
         "provider": "google",
-        "name": "gemini-3-pro-preview"
+        "name": "gemini-3-flash-preview"
       },
       "temperature": 0.4,
       "maxTokens": 1200,
@@ -273,7 +273,7 @@ GET /api/agents/general
   },
   "model": {
     "provider": "google",
-    "name": "gemini-3-pro-preview"
+    "name": "gemini-3-flash-preview"
   },
   "temperature": 0.4,
   "maxTokens": 1200,
