@@ -33,7 +33,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
-  
+
   res.on('finish', () => {
     const duration = Date.now() - start;
     logger.info({
@@ -44,7 +44,7 @@ app.use((req, res, next) => {
       userAgent: req.get('User-Agent'),
     }, 'HTTP request');
   });
-  
+
   next();
 });
 
@@ -79,8 +79,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
  */
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || '1.0.0',
     uptime: process.uptime(),
@@ -114,14 +114,14 @@ app.use('*', (req, res) => {
 
 // Error handling middleware
 app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error({ 
-    error: error.message, 
+  logger.error({
+    error: error.message,
     stack: error.stack,
     url: req.url,
     method: req.method,
   }, 'Unhandled error');
-  
-  res.status(500).json({ 
+
+  res.status(500).json({
     error: 'Internal server error',
     ...(env.NODE_ENV === 'development' && { details: error.message }),
   });
@@ -143,23 +143,23 @@ async function startServer() {
   try {
     // Connect to MongoDB
     await connectMongoDB();
-    
+
     // Start HTTP server
     const server = app.listen(env.PORT, () => {
-      logger.info({ 
-        port: env.PORT, 
+      logger.info({
+        port: env.PORT,
         env: env.NODE_ENV,
         healthEndpoint: `http://localhost:${env.PORT}/health`,
         apiEndpoints: [
           '/api/auth',
           '/api/agents',
-          '/api/conversations', 
+          '/api/conversations',
           '/api/messages',
           '/api/chat',
           '/api/admin/knowledge'
         ]
       }, '🚀 Multimodal Chat Backend Server Successfully Started!');
-      
+
       // Additional console output for better visibility
       console.log('\n' + '='.repeat(60));
       console.log('🚀 MULTIMODAL CHAT BACKEND SERVER');
@@ -177,7 +177,7 @@ async function startServer() {
       console.log(`   • /api/admin/knowledge`);
       console.log('='.repeat(60) + '\n');
     });
-    
+
     // Graceful shutdown
     const gracefulShutdown = () => {
       server.close(() => {
@@ -185,10 +185,10 @@ async function startServer() {
         process.exit(0);
       });
     };
-    
+
     process.on('SIGTERM', gracefulShutdown);
     process.on('SIGINT', gracefulShutdown);
-    
+
   } catch (error) {
     logger.error({ error }, 'Failed to start server');
     process.exit(1);
