@@ -18,7 +18,7 @@ async function testGeminiAPI() {
     
     // First, list available models
     console.log('\nFetching available models...');
-    const models = ['gemini-3-pro-previewew', 'gemini-3-pro-previewew', 'gemini-1.5-pro', 'gemini-pro'];
+    const models = ['gemini-3-pro-preview', 'gemini-3-pro-preview', 'gemini-1.5-pro', 'gemini-pro'];
     
     for (const modelName of models) {
       try {

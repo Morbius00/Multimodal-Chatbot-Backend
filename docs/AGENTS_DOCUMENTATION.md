@@ -22,7 +22,7 @@ The **General Assistant** acts as the primary interface and intelligent router:
 ### 1. **General Assistant** (Head/Orchestrator)
 **Agent Key:** `general`  
 **Display Name:** AXORA - Head Assistant  
-**Model:** gemini-3-pro-previewew
+**Model:** gemini-3-pro-preview
 
 **Role:**
 - Primary user interface and conversation coordinator
@@ -63,7 +63,7 @@ User: "Should I invest in index funds?"
 ### 2. **Education Assistant**
 **Agent Key:** `education`  
 **Display Name:** Education Assistant  
-**Model:** gemini-3-pro-previewew
+**Model:** gemini-3-pro-preview
 
 **Expertise:**
 - Academic subjects (all levels): STEM, humanities, languages, arts
@@ -90,7 +90,7 @@ User: "Should I invest in index funds?"
 ### 3. **Finance Assistant**
 **Agent Key:** `finance`  
 **Display Name:** Finance Assistant  
-**Model:** gemini-3-pro-previewew
+**Model:** gemini-3-pro-preview
 
 **Expertise:**
 - Financial education and literacy
@@ -118,7 +118,7 @@ User: "Should I invest in index funds?"
 ### 4. **Medical Information Assistant**
 **Agent Key:** `medical`  
 **Display Name:** Medical Information Assistant  
-**Model:** gemini-3-pro-previewew
+**Model:** gemini-3-pro-preview
 
 **Expertise:**
 - Health education and medical concepts
@@ -147,7 +147,7 @@ User: "Should I invest in index funds?"
 ### 5. **Technology Assistant** ⭐ NEW
 **Agent Key:** `technology`  
 **Display Name:** Technology Assistant  
-**Model:** gemini-3-pro-previewew
+**Model:** gemini-3-pro-preview
 
 **Expertise:**
 - Software development (all major languages and frameworks)
@@ -181,7 +181,7 @@ JavaScript/TypeScript, Python, Java, C/C++, Go, Rust, C#, PHP, Ruby, Swift, Kotl
 ### 6. **Legal Information Assistant** ⭐ NEW
 **Agent Key:** `legal`  
 **Display Name:** Legal Information Assistant  
-**Model:** gemini-3-pro-previewew
+**Model:** gemini-3-pro-preview
 
 **Expertise:**
 - Legal concepts and terminology
@@ -219,7 +219,7 @@ JavaScript/TypeScript, Python, Java, C/C++, Go, Rust, C#, PHP, Ruby, Swift, Kotl
 ### 7. **Creative Assistant** ⭐ NEW
 **Agent Key:** `creative`  
 **Display Name:** Creative Assistant  
-**Model:** gemini-3-pro-previewew
+**Model:** gemini-3-pro-preview
 
 **Expertise:**
 - Creative writing (fiction, non-fiction, scripts, poetry)
@@ -249,7 +249,7 @@ JavaScript/TypeScript, Python, Java, C/C++, Go, Rust, C#, PHP, Ruby, Swift, Kotl
 ### 8. **Language Assistant** ⭐ NEW
 **Agent Key:** `language`  
 **Display Name:** Language Assistant  
-**Model:** gemini-3-pro-previewew
+**Model:** gemini-3-pro-preview
 
 **Expertise:**
 - Translation and interpretation
@@ -281,7 +281,7 @@ English, Spanish, French, German, Italian, Portuguese, Russian, Chinese (Mandari
 ### 9. **Business Assistant** ⭐ NEW
 **Agent Key:** `business`  
 **Display Name:** Business Assistant  
-**Model:** gemini-3-pro-previewew
+**Model:** gemini-3-pro-preview
 
 **Expertise:**
 - Business strategy and planning

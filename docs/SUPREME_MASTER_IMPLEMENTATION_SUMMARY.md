@@ -56,7 +56,7 @@ But I've given you the integrated foundation across all domains to start!"
 **Agent Specifications:**
 - **Display Name:** Code Master
 - **Key:** `coding`
-- **Model:** gemini-3-pro-previewew
+- **Model:** gemini-3-pro-preview
 - **Temperature:** 0.2 (precision for code accuracy)
 - **Max Tokens:** 4000 (handles large code blocks)
 - **Top K Retrieval:** 8 (more context than other agents)
@@ -152,7 +152,7 @@ coding: {
   },
   model: { 
     provider: 'google',
-    name: 'gemini-3-pro-previewew' 
+    name: 'gemini-3-pro-preview' 
   },
   temperature: 0.2,
   maxTokens: 4000,

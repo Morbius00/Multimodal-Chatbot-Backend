@@ -49,7 +49,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-pro-previewew' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.5,
     maxTokens: 2000,
@@ -67,7 +67,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-pro-previewew' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.3,
     maxTokens: 1200,
@@ -87,7 +87,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-pro-previewew' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.3,
     maxTokens: 1000,
@@ -107,7 +107,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-pro-previewew' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.2,
     maxTokens: 1000,
@@ -125,7 +125,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-pro-previewew' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.3,
     maxTokens: 2500,
@@ -145,7 +145,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-pro-previewew' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.2,
     maxTokens: 1500,
@@ -163,7 +163,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-pro-previewew' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.8,
     maxTokens: 2000,
@@ -181,7 +181,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-pro-previewew' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.4,
     maxTokens: 1800,
@@ -199,7 +199,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-pro-previewew' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.4,
     maxTokens: 2000,
@@ -217,7 +217,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-pro-previewew' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.2,
     maxTokens: 4000,
