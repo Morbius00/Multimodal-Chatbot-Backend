@@ -61,7 +61,7 @@ You should see a successful response from Gemini.
 ## Current Configuration
 
 The system is now configured to use:
-- **Model:** `gemini-3-pro-preview` (changed from `gemini-3-pro-preview`)
+- **Model:** `gemini-3-pro-previewew` (changed from `gemini-3-pro-previewew`)
 - All agents (general, education, finance, medical) use this model
 
 ## Free Tier Limits
