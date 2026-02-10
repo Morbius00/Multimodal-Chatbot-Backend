@@ -1,0 +1,84 @@
+# Render deployment configuration for Axora Backend
+services:
+  - type: web
+    name: axora-backend
+    runtime: docker
+    plan: free  # Change to 'starter' or higher for production
+    region: oregon  # or singapore, frankfurt, ohio depending on your needs
+    branch: master
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    
+    # Environment variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      
+      # NOTE: PORT is automatically set by Render - do not override
+      
+      - key: LOG_LEVEL
+        value: info
+      
+      # Add these in Render Dashboard (don't commit secrets)
+      - key: MONGO_URL
+        sync: false
+      
+      - key: GOOGLE_GENAI_API_KEY
+        sync: false
+      
+      - key: JWT_PUBLIC_KEY
+        sync: false
+      
+      - key: JWT_ISSUER
+        value: xora-auth
+      
+      - key: JWT_AUDIENCE
+        value: xora-app
+      
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      
+      - key: ALLOWED_ORIGINS
+        value: https://axora-bot.vercel.app
+      
+      # IMPORTANT: Redis has a default value but won't work on Free tier
+      # The app will use the default redis://localhost:6379 (which won't connect)
+      # For production, either:
+      # 1. Add Redis addon in Render (requires paid plan)
+      # 2. Ensure app gracefully handles Redis connection failures
+      - key: REDIS_URL
+        value: redis://localhost:6379
+      
+      # Optional: AWS S3 (if using instead of Cloudinary)
+      # - key: AWS_ACCESS_KEY_ID
+      #   sync: false
+      # - key: AWS_SECRET_ACCESS_KEY
+      #   sync: false
+      # - key: OBJECT_STORE_BUCKET
+      #   value: multimodal-chat-files
+      # - key: OBJECT_STORE_REGION
+      #   value: us-east-1
+    
+    # Health check endpoint
+    healthCheckPath: /health
+    
+    # Auto-deploy on push to master
+    autoDeploy: true
+    
+    # Disk for file uploads (if needed)
+    disk:
+      name: uploads
+      mountPath: /app/uploads
+      sizeGB: 1

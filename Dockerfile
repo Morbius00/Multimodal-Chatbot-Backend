@@ -57,12 +57,12 @@ RUN mkdir -p /app/uploads/temp && \
 # Switch to non-root user
 USER nodejs
 
-# Expose port
+# Expose port (Render can override this with PORT env var)
 EXPOSE 3001
 
-# Health check
+# Health check - uses PORT env var if set, defaults to 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+    CMD node -e "const port = process.env.PORT || 3001; require('http').get('http://localhost:' + port + '/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Start the application
 CMD ["node", "dist/server.js"]

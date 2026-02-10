@@ -149,6 +149,28 @@ src/
 - `npm run lint` - Run ESLint
 - `npm run test` - Run tests
 
+## Deployment
+
+### Deploy to Render
+
+This project is configured for easy deployment on Render. See [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md) for detailed instructions.
+
+**Quick Deploy:**
+1. Push your code to GitHub
+2. Create a new Web Service on [Render Dashboard](https://dashboard.render.com/)
+3. Connect your repository and select the `master` branch
+4. Render will auto-detect the `render.yaml` configuration
+5. Add your environment variables in the Render dashboard
+6. Deploy! 🚀
+
+The backend includes:
+- ✅ Dockerfile optimized for Render
+- ✅ Health check endpoint at `/health`
+- ✅ Auto-deploy on push to master
+- ✅ Cloudinary for persistent file storage (no ephemeral disk issues)
+
+**Note**: The GCP Cloud Run deployment workflow in `.github/workflows/auto_deploy_to_gcp.yml` is currently commented out. You can use Render for free tier or enable GCP when billing is active.
+
 ## Implementation Status
 
 ### Phase 1 - Foundation ✅

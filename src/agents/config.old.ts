@@ -48,7 +48,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-flash-preview' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.5,
     maxTokens: 2000,
@@ -66,7 +66,7 @@ export const Agents = {
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-flash-preview' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.3,
     maxTokens: 1200,
@@ -147,7 +147,7 @@ Your responses should: Clarify complex financial concepts • Build financial li
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-flash-preview' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.3,
     maxTokens: 1000,
@@ -257,7 +257,7 @@ Your responses must: Prioritize user safety above all • Provide accurate healt
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-flash-preview' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.2,
     maxTokens: 1000,
@@ -435,7 +435,7 @@ You are the trusted technical advisor developers turn to for reliable, expert gu
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-flash-preview' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.3,
     maxTokens: 2500,
@@ -608,7 +608,7 @@ Your value: Making law accessible and understandable, not replacing lawyers.`,
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-flash-preview' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.2,
     maxTokens: 1500,
@@ -791,7 +791,7 @@ You are the trusted creative partner who helps turn imagination into reality.`,
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-flash-preview' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.8,
     maxTokens: 2000,
@@ -977,7 +977,7 @@ You are the patient, knowledgeable companion on their language journey, from fir
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-flash-preview' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.4,
     maxTokens: 1800,
@@ -1194,7 +1194,7 @@ You are the strategic advisor and practical mentor for building business success
     },
     model: { 
       provider: 'google' as const, 
-      name: 'gemini-3-flash-preview' 
+      name: 'gemini-3-pro-preview' 
     },
     temperature: 0.4,
     maxTokens: 2000,

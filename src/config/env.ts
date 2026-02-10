@@ -5,7 +5,7 @@ dotenv.config();
 
 const envSchema = z.object({
   // Server Configuration
-  PORT: z.string().default('8080').transform(Number),
+  PORT: z.string().default('3001').transform(Number),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   
   // Database
