@@ -47,8 +47,7 @@ class GoogleGenAIService {
   private getModel(modelName: string, tools?: any[]): GenerativeModel {
     const cacheKey = tools ? `${modelName}:with-tools` : modelName;
     if (!this.models.has(cacheKey)) {
-      // The SDK typings may not include the 'tools' field depending on installed version.
-      // Cast to any to avoid strict type errors while still passing tools when available.
+      // Use v1beta API for newer models like gemini-3-flash-preview
       const params: any = {
         model: modelName,
         generationConfig: {
@@ -57,7 +56,12 @@ class GoogleGenAIService {
         }
       };
       if (tools) params.tools = [{ functionDeclarations: tools }];
-      this.models.set(cacheKey, this.client.getGenerativeModel(params));
+      
+      // Create model with v1beta API version for gemini-3 models
+      const model = this.client.getGenerativeModel(params, {
+        apiVersion: 'v1beta'
+      });
+      this.models.set(cacheKey, model);
     }
     return this.models.get(cacheKey)!;
   }
@@ -218,7 +222,10 @@ class GoogleGenAIService {
 
   async generateEmbedding(text: string): Promise<number[]> {
     try {
-      const model = this.client.getGenerativeModel({ model: 'text-embedding-004' });
+      const model = this.client.getGenerativeModel(
+        { model: 'text-embedding-004' },
+        { apiVersion: 'v1beta' }
+      );
       const result = await model.embedContent(text);
       return result.embedding.values;
     } catch (error) {
