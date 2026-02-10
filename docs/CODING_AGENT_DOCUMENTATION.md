@@ -8,7 +8,7 @@
 
 - **Display Name**: Code Master
 - **Key**: `coding`
-- **Model**: gemini-2.5-flash
+- **Model**: gemini-3-pro-preview
 - **Temperature**: 0.2 (precision-focused for code accuracy)
 - **Max Tokens**: 4000 (handles large code blocks and comprehensive responses)
 
@@ -271,7 +271,7 @@ coding: {
   },
   model: { 
     provider: 'google',
-    name: 'gemini-2.5-flash' 
+    name: 'gemini-3-pro-preview' 
   },
   temperature: 0.2,    // Low for code precision
   maxTokens: 4000,     // High for large code blocks
